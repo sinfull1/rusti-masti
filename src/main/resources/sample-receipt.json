@@ -1,0 +1,21 @@
+{
+  "storeName": "Nimbus Goods Co.",
+  "storeAddress": "742 Market Street, San Francisco, CA 94103",
+  "storeEmail": "support@nimbusgoods.example",
+  "orderId": "NG-2026-0041872",
+  "orderDate": "July 1, 2026",
+  "paymentMethod": "Visa •••• 4242",
+  "customerName": "Jordan Rivera",
+  "customerEmail": "jordan.rivera@example.com",
+  "currency": "$",
+  "items": [
+    { "name": "Aurora Wireless Headphones", "sku": "AUR-BLK-01", "qty": 1, "price": 129.00, "total": 129.00 },
+    { "name": "USB-C Braided Cable (2m)",   "sku": "CBL-USBC-2M", "qty": 2, "price": 14.50,  "total": 29.00 },
+    { "name": "Travel Hard Case",           "sku": "CASE-TRV-01", "qty": 1, "price": 39.50,  "total": 39.50 }
+  ],
+  "subtotal": 197.50,
+  "discount": 20.00,
+  "shipping": 6.99,
+  "tax": 15.80,
+  "total": 200.29
+}

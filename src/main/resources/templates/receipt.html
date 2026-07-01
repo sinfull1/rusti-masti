@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<!--
+  E-commerce receipt template. Data is bound from the JSON request body as `receipt` (a Map).
+  All CSS is inlined (no external fetches) — external resources wreck both latency and the RAM budget.
+  Expected payload shape: see src/main/resources/sample-receipt.json.
+-->
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 480px;
+            background: #ffffff;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: #1f2933;
+            /* Disable anti-aliasing: hard edges before the 4-colour quantisation step. */
+            -webkit-font-smoothing: none;
+            font-smooth: never;
+            text-rendering: optimizeSpeed;
+        }
+        .receipt { padding: 28px 32px 24px; }
+
+        .brand { text-align: center; border-bottom: 2px solid #111827; padding-bottom: 16px; }
+        .brand h1 { font-size: 22px; letter-spacing: 1px; text-transform: uppercase; }
+        .brand .addr { font-size: 11px; color: #000000; margin-top: 6px; line-height: 1.5; }
+
+        .meta { margin-top: 18px; font-size: 12px; color: #000000; }
+        .meta .row { display: flex; justify-content: space-between; padding: 3px 0; }
+        .meta .row .label { color: #000000; }
+        .meta .row .val { font-weight: 600; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
+        thead th {
+            text-align: left; text-transform: uppercase; font-size: 10px; letter-spacing: .5px;
+            color: #000000; border-bottom: 1px solid #000000; padding: 8px 0;
+        }
+        thead th.num, tbody td.num { text-align: right; }
+        tbody td { padding: 9px 0; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+        tbody .name { font-weight: 600; color: #111827; }
+        tbody .sku { color: #000000; font-size: 10px; margin-top: 2px; }
+
+        .totals { margin-top: 14px; font-size: 12px; }
+        .totals .row { display: flex; justify-content: space-between; padding: 4px 0; }
+        .totals .row .label { color: #000000; }
+        .totals .discount .val { color: #ff0000; }
+        .totals .grand {
+            margin-top: 8px; padding-top: 12px; border-top: 2px solid #111827;
+            font-size: 16px; font-weight: 700;
+        }
+
+        .pay { margin-top: 16px; font-size: 12px; color: #000000;
+               display: flex; justify-content: space-between; }
+        .pay .label { color: #000000; }
+
+        .footer { margin-top: 22px; text-align: center; font-size: 11px; color: #000000;
+                  border-top: 1px dashed #000000; padding-top: 16px; line-height: 1.6; }
+        .footer .thanks { font-size: 13px; color: #111827; font-weight: 600; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+<div class="receipt" th:with="cur=${receipt.currency != null ? receipt.currency : '$'}">
+
+    <div class="brand">
+        <h1 th:text="${receipt.storeName} ?: 'Store'">Nimbus Goods Co.</h1>
+        <div class="addr">
+            <div th:text="${receipt.storeAddress}">742 Market Street, San Francisco, CA</div>
+            <div th:text="${receipt.storeEmail}">support@nimbusgoods.example</div>
+        </div>
+    </div>
+
+    <div class="meta">
+        <div class="row"><span class="label">Order</span>
+            <span class="val" th:text="${receipt.orderId}">NG-2026-0041872</span></div>
+        <div class="row"><span class="label">Date</span>
+            <span class="val" th:text="${receipt.orderDate}">July 1, 2026</span></div>
+        <div class="row"><span class="label">Billed to</span>
+            <span class="val" th:text="${receipt.customerName}">Jordan Rivera</span></div>
+        <div class="row" th:if="${receipt.customerEmail}"><span class="label">Email</span>
+            <span class="val" th:text="${receipt.customerEmail}">jordan@example.com</span></div>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Item</th>
+            <th class="num">Qty</th>
+            <th class="num">Price</th>
+            <th class="num">Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${receipt.items}">
+            <td>
+                <div class="name" th:text="${item.name}">Aurora Wireless Headphones</div>
+                <div class="sku" th:if="${item.sku}" th:text="${item.sku}">AUR-BLK-01</div>
+            </td>
+            <td class="num" th:text="${item.qty}">1</td>
+            <td class="num"
+                th:text="${cur + #numbers.formatDecimal(item.price, 1, 'COMMA', 2, 'POINT')}">$129.00</td>
+            <td class="num"
+                th:text="${cur + #numbers.formatDecimal(item.total, 1, 'COMMA', 2, 'POINT')}">$129.00</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="row"><span class="label">Subtotal</span>
+            <span class="val" th:text="${cur + #numbers.formatDecimal(receipt.subtotal, 1, 'COMMA', 2, 'POINT')}">$197.50</span></div>
+        <div class="row discount" th:if="${receipt.discount != null and receipt.discount > 0}">
+            <span class="label">Discount</span>
+            <span class="val" th:text="${'-' + cur + #numbers.formatDecimal(receipt.discount, 1, 'COMMA', 2, 'POINT')}">-$20.00</span></div>
+        <div class="row" th:if="${receipt.shipping != null}"><span class="label">Shipping</span>
+            <span class="val" th:text="${cur + #numbers.formatDecimal(receipt.shipping, 1, 'COMMA', 2, 'POINT')}">$6.99</span></div>
+        <div class="row" th:if="${receipt.tax != null}"><span class="label">Tax</span>
+            <span class="val" th:text="${cur + #numbers.formatDecimal(receipt.tax, 1, 'COMMA', 2, 'POINT')}">$15.80</span></div>
+        <div class="row grand"><span>Total</span>
+            <span th:text="${cur + #numbers.formatDecimal(receipt.total, 1, 'COMMA', 2, 'POINT')}">$200.29</span></div>
+    </div>
+
+    <div class="pay" th:if="${receipt.paymentMethod}">
+        <span class="label">Paid with</span>
+        <span th:text="${receipt.paymentMethod}">Visa •••• 4242</span>
+    </div>
+
+    <div class="footer">
+        <div class="thanks">Thank you for your order!</div>
+        <div>Questions? Reply to your confirmation email or contact support.</div>
+        <div th:text="${receipt.storeName}">Nimbus Goods Co.</div>
+    </div>
+
+</div>
+</body>
+</html>

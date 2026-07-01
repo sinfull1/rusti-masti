@@ -1,0 +1,26 @@
+# Build libblitz_render.so (Rust) and run the Java FFM test that renders the receipt through the FFI
+# boundary. Single image, so the JVM test loads the .so in-process exactly as production would.
+
+# --- Stage 1: compile the Rust cdylib (needs fontconfig dev at build time) ---
+FROM rust:1-bookworm AS rustbuild
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libfontconfig1-dev pkg-config \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /r
+COPY render-ffi/ render-ffi/
+RUN cd render-ffi && cargo build --release
+# -> /r/render-ffi/target/release/libblitz_render.so
+
+# --- Stage 2: JDK 25 + fonts; pre-compile tests, then run the FFI test at container run ---
+FROM eclipse-temurin:25-jdk AS test
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libfontconfig1 libfreetype6 fonts-dejavu-core fonts-liberation \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY . .
+COPY --from=rustbuild /r/render-ffi/target/release/libblitz_render.so /app/libblitz_render.so
+# Download deps + surefire plugin + compile main and test sources once at build (cached in the image).
+RUN ./mvnw -q -DskipTests test
+# Run only the FFI test with native access enabled and the lib path pointed at the .so.
+ENTRYPOINT ["./mvnw", "test", "-Dtest=BlitzRendererTest", "-DfailIfNoTests=false", \
+  "-DargLine=--enable-native-access=ALL-UNNAMED -Dblitz.lib=/app/libblitz_render.so"]

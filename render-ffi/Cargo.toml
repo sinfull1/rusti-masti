@@ -1,0 +1,23 @@
+[package]
+name = "render-ffi"
+version = "0.1.0"
+edition = "2021"
+description = "Blitz (Stylo) HTML->PNG renderer exposed over a C ABI for Java FFM (Panama)."
+
+[lib]
+name = "blitz_render"
+crate-type = ["cdylib"]
+
+# Blitz is pre-1.0; pin to the exact commit the prototype was validated against so the API is stable.
+[dependencies]
+blitz-dom  = { git = "https://github.com/DioxusLabs/blitz", rev = "1262303a85f4fb45c9bb3ad4d7560cbee2a3e61c", features = ["default"] }
+blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "1262303a85f4fb45c9bb3ad4d7560cbee2a3e61c" }
+blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "1262303a85f4fb45c9bb3ad4d7560cbee2a3e61c" }
+blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "1262303a85f4fb45c9bb3ad4d7560cbee2a3e61c" }
+anyrender = "0.11.0"
+anyrender_vello_cpu = { version = "0.14.0", features = ["multithreading"] }
+peniko = "0.6.0"
+png = "0.18"
+
+[profile.release]
+opt-level = 3

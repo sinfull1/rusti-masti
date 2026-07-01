@@ -1,0 +1,8 @@
+target/
+blitz-proto/
+.git/
+.idea/
+*.iml
+render-ffi/target/
+samples/
+receipt*.png

@@ -1,0 +1,76 @@
+<!--
+  Receipt BODY fragment (no <html>/<head>/<style>). Rendered per request and either (a) spliced into
+  the shell for reload mode, or (b) pushed into the resident shell's <body> via JS for inject mode.
+  The CSS lives once in receipt-shell.html. Data binds as `receipt` (a Map). See TemplateService.
+-->
+<div class="receipt" th:with="cur=${receipt.currency != null ? receipt.currency : '$'}">
+
+    <div class="brand">
+        <h1 th:text="${receipt.storeName} ?: 'Store'">Nimbus Goods Co.</h1>
+        <div class="addr">
+            <div th:text="${receipt.storeAddress}">742 Market Street, San Francisco, CA</div>
+            <div th:text="${receipt.storeEmail}">support@nimbusgoods.example</div>
+        </div>
+    </div>
+
+    <div class="meta">
+        <div class="row"><span class="label">Order</span>
+            <span class="val" th:text="${receipt.orderId}">NG-2026-0041872</span></div>
+        <div class="row"><span class="label">Date</span>
+            <span class="val" th:text="${receipt.orderDate}">July 1, 2026</span></div>
+        <div class="row"><span class="label">Billed to</span>
+            <span class="val" th:text="${receipt.customerName}">Jordan Rivera</span></div>
+        <div class="row" th:if="${receipt.customerEmail}"><span class="label">Email</span>
+            <span class="val" th:text="${receipt.customerEmail}">jordan@example.com</span></div>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Item</th>
+            <th class="num">Qty</th>
+            <th class="num">Price</th>
+            <th class="num">Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${receipt.items}">
+            <td>
+                <div class="name" th:text="${item.name}">Aurora Wireless Headphones</div>
+                <div class="sku" th:if="${item.sku}" th:text="${item.sku}">AUR-BLK-01</div>
+            </td>
+            <td class="num" th:text="${item.qty}">1</td>
+            <td class="num"
+                th:text="${cur + #numbers.formatDecimal(item.price, 1, 'COMMA', 2, 'POINT')}">$129.00</td>
+            <td class="num"
+                th:text="${cur + #numbers.formatDecimal(item.total, 1, 'COMMA', 2, 'POINT')}">$129.00</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="row"><span class="label">Subtotal</span>
+            <span class="val" th:text="${cur + #numbers.formatDecimal(receipt.subtotal, 1, 'COMMA', 2, 'POINT')}">$197.50</span></div>
+        <div class="row discount" th:if="${receipt.discount != null and receipt.discount > 0}">
+            <span class="label">Discount</span>
+            <span class="val" th:text="${'-' + cur + #numbers.formatDecimal(receipt.discount, 1, 'COMMA', 2, 'POINT')}">-$20.00</span></div>
+        <div class="row" th:if="${receipt.shipping != null}"><span class="label">Shipping</span>
+            <span class="val" th:text="${cur + #numbers.formatDecimal(receipt.shipping, 1, 'COMMA', 2, 'POINT')}">$6.99</span></div>
+        <div class="row" th:if="${receipt.tax != null}"><span class="label">Tax</span>
+            <span class="val" th:text="${cur + #numbers.formatDecimal(receipt.tax, 1, 'COMMA', 2, 'POINT')}">$15.80</span></div>
+        <div class="row grand"><span>Total</span>
+            <span th:text="${cur + #numbers.formatDecimal(receipt.total, 1, 'COMMA', 2, 'POINT')}">$200.29</span></div>
+    </div>
+
+    <div class="pay" th:if="${receipt.paymentMethod}">
+        <span class="label">Paid with</span>
+        <span th:text="${receipt.paymentMethod}">Visa •••• 4242</span>
+    </div>
+
+    <div class="footer">
+        <div class="thanks">Thank you for your order!</div>
+        <div>Questions? Reply to your confirmation email or contact support.</div>
+        <div th:text="${receipt.storeName}">Nimbus Goods Co.</div>
+    </div>
+
+</div>

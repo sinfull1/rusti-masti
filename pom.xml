@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>image</artifactId>
+    <version>0.1</version>
+    <packaging>${packaging}</packaging>
+
+    <parent>
+        <groupId>io.micronaut.platform</groupId>
+        <artifactId>micronaut-parent</artifactId>
+        <version>5.0.3</version>
+    </parent>
+
+    <properties>
+        <packaging>jar</packaging>
+        <jdk.version>25</jdk.version>
+        <release.version>25</release.version>
+        <micronaut.version>5.0.3</micronaut.version>
+        <micronaut.aot.enabled>false</micronaut.aot.enabled>
+        <micronaut.aot.packageName>com.example.aot.generated</micronaut.aot.packageName>
+        <!-- Long-lived server runtime is mandatory: JavaFX/WebView warmup is once-per-JVM
+             and the WebView pool must stay resident. The original http_poja (one request
+             per process) would re-pay ~2-4s of JavaFX startup on every single request. -->
+        <micronaut.runtime>netty</micronaut.runtime>
+        <exec.mainClass>com.example.Application</exec.mainClass>
+        <!-- JavaFX must match the JDK major line; javafx-web pulls in the WebKit engine.
+             The "linux" classifier binds the native libs for this host/target. -->
+        <javafx.version>25</javafx.version>
+        <javafx.platform>linux</javafx.platform>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+    </repositories>
+
+
+    <dependencies>
+
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-http-client</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micronaut.serde</groupId>
+            <artifactId>micronaut-serde-jackson</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-http-server-netty</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- JavaFX: graphics (Prism + Glass), controls (Scene wiring), web (WebKit engine),
+             swing (SwingFXUtils WritableImage -> BufferedImage for PNG encode). -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+
+        <!-- Thymeleaf: data (JSON) -> HTML. Used standalone (render to String), not as a Micronaut
+             view, because we feed the HTML to WebView rather than returning it over HTTP.
+             The TemplateEngine caches parsed templates (setCacheable) — essential at ~10 img/s. -->
+        <dependency>
+            <groupId>org.thymeleaf</groupId>
+            <artifactId>thymeleaf</artifactId>
+            <version>3.1.2.RELEASE</version>
+        </dependency>
+
+        <!-- Headless rendering: default path is Xvfb (see run.sh) — no extra dependency.
+             OPTIONAL pure-Java alternative is Gluon Monocle, which is NOT on Maven Central; to use it
+             add the Gluon repo and dependency, then set -Dglass.platform=Monocle -Dmonocle.platform=Headless:
+               <repository><id>gluon</id><url>https://nexus.gluonhq.com/nexus/content/repositories/releases/</url></repository>
+               <dependency><groupId>com.gluonhq</groupId><artifactId>monocle</artifactId><version>17.0.10</version></dependency>
+        -->
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micronaut.test</groupId>
+            <artifactId>micronaut-test-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.micronaut.maven</groupId>
+                <artifactId>micronaut-maven-plugin</artifactId>
+                <configuration>
+                    <configFile>aot-${packaging}.properties</configFile>
+                    <configurationValidation>
+                        <enabled>false</enabled>
+
+                        <suppressions>
+                            <suppression>datasources.default.db-type</suppression>
+                        </suppressions>
+                        <failOnNotPresent>true</failOnNotPresent>
+                        <validateDependencyInjection>false</validateDependencyInjection>
+                        <cacheEnabled>true</cacheEnabled>
+
+                    </configurationValidation>
+
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- Uncomment to enable incremental compilation -->
+                    <!-- <useIncrementalCompilation>false</useIncrementalCompilation> -->
+
+                    <annotationProcessorPaths combine.children="append">
+                        <path>
+                            <groupId>io.micronaut</groupId>
+                            <artifactId>micronaut-http-validation</artifactId>
+                            <version>${micronaut.core.version}</version>
+                        </path>
+                        <path>
+                            <groupId>io.micronaut.serde</groupId>
+                            <artifactId>micronaut-serde-processor</artifactId>
+                            <version>${micronaut.serialization.version}</version>
+                            <exclusions>
+                                <exclusion>
+                                    <groupId>io.micronaut</groupId>
+                                    <artifactId>micronaut-inject</artifactId>
+                                </exclusion>
+                            </exclusions>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Amicronaut.processing.group=com.example</arg>
+                        <arg>-Amicronaut.processing.module=image</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
+</project>
