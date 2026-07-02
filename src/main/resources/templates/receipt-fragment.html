@@ -3,7 +3,7 @@
   the shell for reload mode, or (b) pushed into the resident shell's <body> via JS for inject mode.
   The CSS lives once in receipt-shell.html. Data binds as `receipt` (a Map). See TemplateService.
 -->
-<div class="receipt" th:with="cur=${receipt.currency != null ? receipt.currency : '$'}">
+<div class="receipt" th:fragment="body" th:with="cur=${receipt.currency != null ? receipt.currency : '$'}">
 
     <div class="brand">
         <h1 th:text="${receipt.storeName} ?: 'Store'">Nimbus Goods Co.</h1>

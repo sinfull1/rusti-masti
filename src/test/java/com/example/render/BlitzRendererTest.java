@@ -61,7 +61,7 @@ class BlitzRendererTest {
         String html = new TemplateService().blitzDocument("receipt-fragment", sampleReceipt());
 
         try (BlitzRenderer renderer = new BlitzRenderer(libPath())) {
-            renderer.init(0);
+            renderer.init(null); // null => native defaults (black/white/red/blue, sat 60, lum 180)
 
             // 4-colour indexed PNG (the production output format).
             byte[] indexed = renderer.render(html, 480, 2.0, true, true);
@@ -87,7 +87,10 @@ class BlitzRendererTest {
         int threads = 8;
 
         try (BlitzRenderer renderer = new BlitzRenderer(libPath())) {
-            renderer.init(threads);
+            renderer.init(new BlitzConfig(
+                    new byte[]{0, 0, 0, (byte) 255, (byte) 255, (byte) 255,
+                            (byte) 255, 0, 0, 0, 0, (byte) 255},
+                    60, 180, 800, 4000, 8000));
             ExecutorService pool = Executors.newFixedThreadPool(threads);
             try {
                 List<Callable<byte[]>> jobs = IntStream.range(0, threads * 4)

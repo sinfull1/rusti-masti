@@ -23,6 +23,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY --from=javabuild /b/target/image-0.1.jar /app/app.jar
 COPY --from=rustbuild /r/render-ffi/target/release/libblitz_render.so /app/libblitz_render.so
+# Run as a non-root user (defence in depth: a native-render exploit is then unprivileged in-container).
+# The app writes nothing to disk at runtime (renders in memory), so read-only /app is fine.
+RUN useradd -r -u 10001 appuser && chown -R appuser:appuser /app
+USER 10001
 EXPOSE 8080
 # EXTRA_OPTS lets the load test tune heap / blocking-pool size per run.
 ENV EXTRA_OPTS="-XX:MaxRAMPercentage=40"

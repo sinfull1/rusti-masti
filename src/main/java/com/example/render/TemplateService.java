@@ -60,6 +60,16 @@ public class TemplateService {
         return engine.process(fragmentTemplate, ctx);
     }
 
+    /**
+     * Render a complete standalone template (its own {@code <head>}/CSS, e.g. a size variant) with
+     * {@code model} exposed as {@code receipt}. Returns a full HTML document ready for either backend.
+     */
+    public String document(String templateName, Map<String, Object> model) {
+        Context ctx = new Context(Locale.US);
+        ctx.setVariable("receipt", model);
+        return engine.process(templateName, ctx);
+    }
+
     /** Full standalone document: shell + fragment spliced into the body (for reload mode). */
     public String fullDocument(String fragmentTemplate, Map<String, Object> model) {
         return shellRaw.replace(BODY_MARKER, fragment(fragmentTemplate, model));

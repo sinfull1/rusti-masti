@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- SMALL receipt (320px). Compact: smaller type, tighter spacing, SKU hidden. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 320px; background: #fff;
+            font-family: "Liberation Sans","DejaVu Sans",Arial,sans-serif; color: #1f2933;
+            -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; }
+        .receipt { padding: 18px 20px 16px; }
+        .brand { text-align: center; border-bottom: 2px solid #111827; padding-bottom: 11px; }
+        .brand h1 { font-size: 16px; letter-spacing: .5px; text-transform: uppercase; }
+        .brand .addr { font-size: 8px; color: #000; margin-top: 4px; line-height: 1.5; }
+        .meta { margin-top: 13px; font-size: 9px; color: #000; }
+        .meta .row { display: flex; justify-content: space-between; padding: 2px 0; }
+        .meta .row .val { font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 13px; font-size: 9px; }
+        thead th { text-align: left; text-transform: uppercase; font-size: 8px; letter-spacing: .3px;
+            color: #000; border-bottom: 1px solid #000; padding: 6px 0; }
+        thead th.num, tbody td.num { text-align: right; }
+        tbody td { padding: 6px 0; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+        tbody .name { font-weight: 600; color: #111827; }
+        tbody .sku { display: none; }   /* compact: hide SKU on small */
+        .totals { margin-top: 10px; font-size: 9px; }
+        .totals .row { display: flex; justify-content: space-between; padding: 3px 0; }
+        .totals .discount .val { color: #ff0000; }
+        .totals .grand { margin-top: 6px; padding-top: 9px; border-top: 2px solid #111827;
+            font-size: 12px; font-weight: 700; }
+        .pay { margin-top: 12px; font-size: 9px; color: #000; display: flex; justify-content: space-between; }
+        .footer { margin-top: 16px; text-align: center; font-size: 8px; color: #000;
+            border-top: 1px dashed #000; padding-top: 12px; line-height: 1.6; }
+        .footer .thanks { font-size: 10px; color: #111827; font-weight: 600; margin-bottom: 3px; }
+    </style>
+</head>
+<body th:insert="~{receipt-fragment :: body}"></body>
+</html>

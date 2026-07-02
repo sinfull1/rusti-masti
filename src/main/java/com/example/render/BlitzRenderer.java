@@ -20,11 +20,20 @@ import java.nio.file.Path;
  *
  * <p>C ABI (see {@code render-ffi/src/lib.rs}):
  * <pre>
- *   int32_t blitz_init(uint32_t threads);
+ *   int32_t blitz_init(const BlitzConfigC* cfg);   // cfg may be NULL -> defaults
  *   int32_t blitz_render(const uint8_t* html, size_t html_len,
  *                        uint32_t width, double scale, int32_t auto_height, int32_t quantize,
  *                        uint8_t** out_ptr, size_t* out_len, uint32_t* out_w, uint32_t* out_h);
  *   void    blitz_free(uint8_t* ptr, size_t len);
+ *
+ *   struct BlitzConfigC {   // 32 bytes, 4-byte aligned; offsets below
+ *     uint8_t palette[12];  // @0   4 colours x RGB, index order
+ *     int32_t sat_threshold;// @12
+ *     int32_t lum_threshold;// @16
+ *     uint32_t default_height;//@20
+ *     uint32_t max_width;   // @24
+ *     uint32_t max_height;  // @28
+ *   };
  * </pre>
  */
 public final class BlitzRenderer implements AutoCloseable {
@@ -44,7 +53,7 @@ public final class BlitzRenderer implements AutoCloseable {
 
         this.hInit = linker.downcallHandle(
                 lib.find("blitz_init").orElseThrow(() -> missing("blitz_init")),
-                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)); // const BlitzConfigC*
 
         this.hRender = linker.downcallHandle(
                 lib.find("blitz_render").orElseThrow(() -> missing("blitz_render")),
@@ -65,10 +74,23 @@ public final class BlitzRenderer implements AutoCloseable {
                 FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, C_SIZE_T));
     }
 
-    /** Optional warmup (font system / thread pool). Safe to skip. */
-    public void init(int threads) {
-        try {
-            int rc = (int) hInit.invoke(threads);
+    /**
+     * Configure the renderer (palette, thresholds, dimension bounds). Pass {@code null} to keep the
+     * native defaults. The native side copies the struct, so the memory need only live for this call.
+     */
+    public void init(BlitzConfig cfg) {
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment cfgSeg = MemorySegment.NULL;
+            if (cfg != null) {
+                cfgSeg = arena.allocate(32, 4); // sizeof(BlitzConfigC), 4-byte aligned
+                MemorySegment.copy(cfg.palette(), 0, cfgSeg, ValueLayout.JAVA_BYTE, 0, 12);
+                cfgSeg.set(ValueLayout.JAVA_INT, 12, cfg.satThreshold());
+                cfgSeg.set(ValueLayout.JAVA_INT, 16, cfg.lumThreshold());
+                cfgSeg.set(ValueLayout.JAVA_INT, 20, cfg.defaultHeight());
+                cfgSeg.set(ValueLayout.JAVA_INT, 24, cfg.maxWidth());
+                cfgSeg.set(ValueLayout.JAVA_INT, 28, cfg.maxHeight());
+            }
+            int rc = (int) hInit.invoke(cfgSeg);
             if (rc != 0) {
                 throw new RenderException("blitz_init failed rc=" + rc);
             }
